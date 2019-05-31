@@ -22,6 +22,12 @@ async function getSongsPerGenre(genre, page, songs) {
 
   return axios.get(config.lastFM.baseURL + query + signature).then(response => {
     if (response.data.tracks.track) {
+      // Attributes
+      const attributes = response.data.tracks['@attr'];
+      const currentPage = parseInt(attributes.page);
+      const isLastPage = currentPage === parseInt(attributes.totalPages);
+
+      // Loop songs retrieved
       response.data.tracks.track.forEach(function (track) {
         if (songs.length < config.crawler.maxPerGenre) { // TODO: check if song already retrieved (in another genre also)
           var song = {
@@ -33,10 +39,10 @@ async function getSongsPerGenre(genre, page, songs) {
         }
       });
 
-      // Check if we have less than the maximum
-      if (songs.length < config.crawler.maxPerGenre) {
+      // Check if we have less than the maximum and we have more songs to retrieve
+      if (songs.length < config.crawler.maxPerGenre && !isLastPage) {
         // Recursive call
-        return getSongsPerGenre(genre, page + 1, songs);
+        return getSongsPerGenre(genre, currentPage + 1, songs);
       } else {
         // End of recursion
         return songs;
