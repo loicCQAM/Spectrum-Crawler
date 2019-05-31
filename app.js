@@ -8,7 +8,7 @@ var signature = '&api_key=' + API_KEY + '&format=json';
 
 // GENRES
 var MAX_GENRES = 75;
-var MAX_PER_GENRE = 1000;
+var MAX_PER_GENRE = 100;
 var genres = [];
 
 /**
