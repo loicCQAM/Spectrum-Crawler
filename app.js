@@ -1,6 +1,7 @@
 var lastFM = require('./lastfm');
 var genres = [];
-
+var client = require('./client');
+ 
 /**
  * @getSongs
  * Loops an array of genres
@@ -16,10 +17,20 @@ const getSongs = async () => {
 };
 
 /**
+ * @setConnection
+ * 
+ */
+const setConnection = async () => {
+  client.connect();
+  console.log('---------- Connected to DB ! ----------');
+};
+
+/**
  * @crawl
  * Starts the programm
  */
 const crawl = async () => {
+  setConnection();
   console.log('');
   console.log('---------- Getting genres ----------');
   genres = await lastFM.getGenres();

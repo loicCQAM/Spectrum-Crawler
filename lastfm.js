@@ -2,6 +2,7 @@
 var axios = require('axios');
 var config = require('./config');
 var signature = '&api_key=' + config.lastFM.key + '&format=json';
+var client = require('./client');
 
 /**
 * @getSongsPerGenre
@@ -35,6 +36,8 @@ async function getSongsPerGenre(genre, page, songs) {
             artist: track.artist.name,
             genre: genre
           }
+          client.query("INSERT INTO genre(genre) values($1)", [song.genre]);
+          client.query("INSERT INTO song(title,artist,id_genre) values($1,$2,$3)", [song.title,song.artist,1]);
           songs.push(song);
         }
       });
