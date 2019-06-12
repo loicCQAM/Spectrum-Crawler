@@ -30,15 +30,29 @@ async function getSongsPerGenre(genre, page, songs) {
 
       // Loop songs retrieved
       response.data.tracks.track.forEach(function (track) {
-        if (songs.length < config.crawler.maxPerGenre) { // TODO: check if song already retrieved (in another genre also)
+        if (songs.length < config.crawler.maxPerGenre) { 
+          // TODO: check if song already retrieved (in another genre also) PS: verification's already made with DB constraints
+          var id_genre
           var song = {
             title: track.name,
             artist: track.artist.name,
             genre: genre
           }
-          client.query("INSERT INTO genre(genre) values($1)", [song.genre]);
-          client.query("INSERT INTO song(title,artist,id_genre) values($1,$2,$3)", [song.title,song.artist,1]);
-          songs.push(song);
+          try{
+            //Select genre_id in DB
+            client.query("SELECT id_genre FROM public.genre WHERE genre = $1", [song.genre], (err,res) => {
+              console.log(err,res,id_genre = res.rows[0].id_genre);     
+            });
+
+            //Insert song in DB 
+            client.query("INSERT INTO song(title,artist,id_genre) values($1,$2,$3)", [song.title,song.artist,id_genre], (err,res) => {
+              console.log(err,res,id_genre);    
+            });
+            songs.push(song);
+
+          }catch(error){
+            console.log(error);
+          }  
         }
       });
 
@@ -70,7 +84,12 @@ async function getGenres() {
   return axios.get(config.lastFM.baseURL + query + signature).then(response => {
     if (response.data.toptags.tag) {
       response.data.toptags.tag.forEach(function (genre) {
-        genres.push(genre.name);
+
+        //Insert genre in DB
+        client.query("INSERT INTO genre(genre) values($1)", [genre.name], (err,res) => {
+          console.log(err,res);                 
+        });
+        genres.push(genre.name); 
       });
       return genres;
     }

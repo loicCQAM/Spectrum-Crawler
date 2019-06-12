@@ -17,20 +17,29 @@ const getSongs = async () => {
 };
 
 /**
- * @setConnection
- * 
+ * @connect
+ * Connects to DB
  */
-const setConnection = async () => {
-  client.connect();
+const connect = async () => {
+  await client.connect();
   console.log('---------- Connected to DB ! ----------');
 };
 
 /**
+ * @disconnect
+ * Disconnects of DB
+ */
+const disconnect = async () => {
+  await client.end();
+  console.log('---------- Disconnected to DB ! ----------');
+};
+
+/**
  * @crawl
- * Starts the programm
+ * Starts the program
  */
 const crawl = async () => {
-  setConnection();
+  connect();
   console.log('');
   console.log('---------- Getting genres ----------');
   genres = await lastFM.getGenres();
