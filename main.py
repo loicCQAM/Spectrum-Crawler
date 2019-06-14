@@ -40,6 +40,11 @@ else:
     if (len(songs) < len(lastFM_songs)):
         print(str(len(lastFM_songs) - len(songs)) + " songs lost in conversion")
 
+    print("Step 3 --- Database insertion")
+    print("Needs to be done")
+    # TODO ajouter les genres à la BD
+    # TODO ajouter les chansons à la BD
+
     print("")
     print("DONE !")
     print("")
