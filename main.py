@@ -33,10 +33,7 @@ else:
     print("Step 2 --- Spotify extraction")
     for song in lastFM_songs:
         s = spotifyAPI.search_song(song['title'], song['artist'])
-        if (s is False):
-            print("Error retrieving " +
-                  song['title'] + " from " + song['artist'])
-        else:
+        if (s is not False):
             songs.append(s)
 
     print(str(len(songs)) + " songs retrieved")
