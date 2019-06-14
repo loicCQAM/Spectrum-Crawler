@@ -1,5 +1,6 @@
 import sys
 import lastFM
+import spotifyAPI
 
 print("***** SPECTRUM CRAWLER *****")
 print("")
@@ -29,7 +30,9 @@ else:
 
     print("")
     print("Step 2 --- Spotify extraction")
-    print("TO DO !")
+    for song in songs:
+        s = spotifyAPI.search_song(song['title'], song['artist'])
+        print(s)
 
     print("")
     print("DONE !")
