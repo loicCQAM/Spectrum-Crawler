@@ -45,6 +45,7 @@ else:
     with open('songs.json', 'w') as outfile:
         json.dump(songs, outfile)
 
+    print("")
     print("Step 3 --- Database insertion")
     print("Needs to be done")
 
