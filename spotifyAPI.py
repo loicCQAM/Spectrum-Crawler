@@ -18,13 +18,13 @@ def search_song(title, artist):
     result = sp.search(q=title + ', ' + artist, type='track', limit=1)
     if (result['tracks']['items'] and len(result['tracks']['items']) > 0):
         s = result['tracks']['items'][0]
-        song['id'] = s['id']
+        song['spotify_id'] = s['id']
         song['title'] = title
         song['artist'] = artist
         song['primitives'] = {}
 
         # get primitives from API
-        features = sp.audio_features([song['id']])
+        features = sp.audio_features([song['spotify_id']])
         if (features and features[0] is not None):
             song['primitives']['duration'] = features[0]['duration_ms']
             song['primitives']['energy'] = features[0]['energy']
@@ -43,9 +43,4 @@ def search_song(title, artist):
     else:
         return False
 
-    return song
-
-
-def get_song(title, artist):
-    song = search_song(title, artist)
     return song

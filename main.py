@@ -1,6 +1,7 @@
 import sys
 import lastFM
 import spotifyAPI
+import json
 
 print("***** SPECTRUM CRAWLER *****")
 print("")
@@ -34,16 +35,18 @@ else:
     for song in lastFM_songs:
         s = spotifyAPI.search_song(song['title'], song['artist'])
         if (s is not False):
+            s['genre'] = song['genre']
             songs.append(s)
 
     print(str(len(songs)) + " songs retrieved")
     if (len(songs) < len(lastFM_songs)):
         print(str(len(lastFM_songs) - len(songs)) + " songs lost in conversion")
 
+    with open('songs.json', 'w') as outfile:
+        json.dump(songs, outfile)
+
     print("Step 3 --- Database insertion")
     print("Needs to be done")
-    # TODO ajouter les genres à la BD
-    # TODO ajouter les chansons à la BD
 
     print("")
     print("DONE !")
