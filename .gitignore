@@ -1,5 +1,8 @@
 # Project specific 
 songs.json
+.idea/*
+.vs/
+node_modules/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -2,6 +2,7 @@ import sys
 import lastFM
 import spotifyAPI
 import json
+from database import *
 
 print("***** SPECTRUM CRAWLER *****")
 print("")
@@ -45,10 +46,20 @@ else:
     with open('songs.json', 'w') as outfile:
         json.dump(songs, outfile)
 
-    print("")
-    print("Step 3 --- Database insertion")
-    print("Needs to be done")
 
-    print("")
-    print("DONE !")
-    print("")
+print("")
+print("Step 3 --- Database insertion")
+with open('songs.json') as json_file:
+    jsonObject = json.load(json_file)
+connect()
+
+# print the keys and values
+for song in jsonObject:
+    id_song = insert_song(song['title'], song['artist'], song['genre'])
+    for primitive, value in song['primitives'].items():
+        insert_song_primitive(id_song, primitive, value)
+
+disconnect()
+print("")
+print("DONE !")
+print("")
