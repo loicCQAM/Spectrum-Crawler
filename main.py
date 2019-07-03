@@ -2,30 +2,33 @@ import sys
 import lastFM
 import spotifyAPI
 import json
-from database import *
+import database
 
-print("***** SPECTRUM CRAWLER *****")
-print("")
+def populate_database(max_genres, songs_per_genre):
+    database.connect()
+    print("***** SPECTRUM CRAWLER *****")
+    print("")
 
-if (len(sys.argv) < 3):
-    sys.exit("Missing parameters")
-elif (not sys.argv[1].isdigit() or not sys.argv[2].isdigit()):
-    sys.exit("Bad parameter type")
-else:
     print("Step 1 --- lastFM extraction")
 
     lastFM_songs = []
     songs = []
-    max_genres = int(sys.argv[1])
-    songs_per_genre = int(sys.argv[2])
+    numSongs = 0
 
     # get genres
     genres = lastFM.get_genres(max_genres)
+    genresMap = {}
 
     print(str(len(genres)) + " genres retrieved")
 
     # get songs
     for genre in genres:
+        # add to database
+        genre_id = database.insert_genre(genre)
+        if (genre_id is not False):
+            genresMap[genre] = genre_id 
+
+        # extraction
         extraction = lastFM.get_songs_per_genre(genre, [], 1, songs_per_genre)
         lastFM_songs = lastFM_songs + extraction
 
@@ -37,29 +40,29 @@ else:
         s = spotifyAPI.search_song(song['title'], song['artist'])
         if (s is not False):
             s['genre'] = song['genre']
-            songs.append(s)
+            if s['genre'] in genresMap:
+                id_song = database.insert_song(s['title'], s['artist'], genresMap[s['genre']])
+                if (id_song is not False) :
+                    numSongs = numSongs + 1
+                    # TODO : insérer les primitives
+                    '''for primitive, value in s['primitives'].items():
+                        #database.insert_song_primitive(id_song, primitive, value)'''
 
-    print(str(len(songs)) + " songs retrieved")
-    if (len(songs) < len(lastFM_songs)):
-        print(str(len(lastFM_songs) - len(songs)) + " songs lost in conversion")
+    print(str(numSongs) + " songs added")
+    if (numSongs < len(lastFM_songs)):
+        print(str(len(lastFM_songs) - numSongs) + " songs lost in conversion")
 
     with open('songs.json', 'w') as outfile:
         json.dump(songs, outfile)
 
+    database.disconnect()
+    print("")
+    print("DONE !")
+    print("")
 
-print("")
-print("Step 3 --- Database insertion")
-with open('songs.json') as json_file:
-    jsonObject = json.load(json_file)
-connect()
-
-# print the keys and values
-for song in jsonObject:
-    id_song = insert_song(song['title'], song['artist'], song['genre'])
-    for primitive, value in song['primitives'].items():
-        insert_song_primitive(id_song, primitive, value)
-
-disconnect()
-print("")
-print("DONE !")
-print("")
+if (len(sys.argv) < 3):
+    sys.exit("Missing parameters")
+elif (not sys.argv[1].isdigit() or not sys.argv[2].isdigit()):
+    sys.exit("Bad parameter type")
+else:
+    populate_database(int(sys.argv[1]), int(sys.argv[2]))

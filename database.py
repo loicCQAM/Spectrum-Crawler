@@ -1,11 +1,11 @@
 import psycopg2
 from config import config
 
-sql_insert_song = """ INSERT INTO song(title, artist, id_genre) VALUES(%s,%s,%s) RETURNING id_song; """
-sql_select_song = """ SELECT id_song FROM song WHERE title = %s AND artist = %s;"""
+sql_insert_song = """ INSERT INTO songs(title, artist, genre_id, album_id) VALUES(%s,%s,%s, 0) RETURNING id; """
+sql_select_song = """ SELECT id FROM songs WHERE title = %s AND artist = %s;"""
 
-sql_insert_genre = """ INSERT INTO genre(genre) VALUES(%s) RETURNING id_genre; """
-sql_select_genre = """ SELECT id_genre FROM genre WHERE genre = %s;"""
+sql_insert_genre = """ INSERT INTO genre(name, is_selected) VALUES(%s, true) RETURNING id;"""
+sql_select_genre = """ SELECT id FROM genre WHERE name = %s;"""
 
 sql_insert_primitive = """ INSERT INTO primitive(primitive) VALUES(%s) RETURNING id_primitive; """
 sql_select_primitive = """ SELECT id_primitive FROM primitive WHERE primitive = %s;"""
@@ -55,61 +55,35 @@ def disconnect():
             print('Database connection closed.')
 
 
-def insert_song(title, artist, genre):
-
-    # SELECT id if song already exists
-    try:
-        cur.execute(sql_select_song, (title, artist))
-        id_song = cur.fetchone()[0]
-
-        if id_song is not None:
-            return id_song
-
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
-
-    # INSERT genre or simply get his id
-    id_genre = insert_genre(genre)
-
+def insert_song(title, artist, id_genre):
     try:
         # INSERT song
         cur.execute(sql_insert_song, (title, artist, id_genre))
 
         # get the generated id back
         id_song = cur.fetchone()[0]
+        return id_song
 
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
         cur.execute("ROLLBACK")
-
-    return id_song
+        return False
 
 
 def insert_genre(genre):
-
-    # SELECT id if genre already exists
-    try:
-        cur.execute(sql_select_genre, (genre,))
-        id_genre = cur.fetchone()[0]
-
-        if id_genre is not None:
-            return id_genre
-
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
-
     try:
         # INSERT genre
         cur.execute(sql_insert_genre, (genre,))
-
+        
         # get the generated id back
         id_genre = cur.fetchone()[0]
+
+        return id_genre
 
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
         cur.execute("ROLLBACK")
-
-    return id_genre
+        return False
 
 
 def insert_primitive(primitive):
