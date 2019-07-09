@@ -78,7 +78,6 @@ def song_exists(title, artist):
         
         # get the generated id back
         num_songs = cur.fetchone()[0]
-
         return num_songs > 0
 
     except (Exception, psycopg2.DatabaseError) as error:
@@ -190,13 +189,14 @@ def populate_database(num_genres, songs_per_genre):
                 s['genre'] = song['genre']
                 if s['genre'] in genre_name_to_id:
                     # add song to database
-                    id_song = insert_song(s['title'], s['artist'], genre_name_to_id[s['genre']])
-                    if (id_song is not False) :
-                        # increment song count
-                        numSongs = numSongs + 1
-                        # insert primitives to database
-                        for primitive, value in s['primitives'].items():
-                            insert_song_primitive(id_song, primitive, value)
+                    if(song_exists(s['title'], s['artist']) is False):
+                        id_song = insert_song(s['title'], s['artist'], genre_name_to_id[s['genre']])
+                        if (id_song is not False) :
+                            # increment song count
+                            numSongs = numSongs + 1
+                            # insert primitives to database
+                            for primitive, value in s['primitives'].items():
+                                insert_song_primitive(id_song, primitive, value)
 
         print(str(numSongs) + " songs added")
         if (numSongs < len(lastFM_songs)):
@@ -206,3 +206,16 @@ def populate_database(num_genres, songs_per_genre):
         print("---------------------")
         disconnect()
 
+def add_songs_to_genre(genre_id, songs_per_genre):
+    if (not genre_id.isdigit() or not songs_per_genre.isdigit()):
+        # TODO: Change to return code 400 (Bad request)
+        print("Wrong parameter types")
+        return False
+    else:
+        connect()
+        print("---------------------")
+        print("\n")
+
+        print("\n")
+        print("---------------------")
+        disconnect()
