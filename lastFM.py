@@ -12,7 +12,6 @@ def get_genres(max_genres, offset):
 
     # construct query
     query = "?method=tag.getTopTags&offset=" + str(offset) + "&num_res=" + str(max_genres)
-    print("Query: " + query)
 
     # call API
     request = requests.get(base_url + query + signature)
@@ -46,7 +45,7 @@ def get_songs_per_genre(genre, songs, page, songs_per_genre):
 
             # loop songs
             for track in request.json()['tracks']['track']:
-                if (len(songs) < int(songs_per_genre) and not database.song_exists(track['name'], track['artist']['name'])):
+                if (len(songs) < int(songs_per_genre) and database.song_exists(track['name'], track['artist']['name']) is False):
                     song = {}
                     song['title'] = track['name']
                     song['artist'] = track['artist']['name']
