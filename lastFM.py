@@ -1,15 +1,18 @@
 import sys
 import requests
+import database
 
 api_key = "496a61caa0ce335911b9cbea2d15e1c9"
 base_url = "http://ws.audioscrobbler.com/2.0/"
 signature = "&api_key=" + api_key + "&format=json"
 
 
-def get_genres(max_genres):
+def get_genres(max_genres, offset):
     genres = []
+
     # construct query
-    query = "?method=tag.getTopTags&num_res=" + str(max_genres)
+    query = "?method=tag.getTopTags&offset=" + str(offset) + "&num_res=" + str(max_genres)
+    print("Query: " + query)
 
     # call API
     request = requests.get(base_url + query + signature)
@@ -43,7 +46,7 @@ def get_songs_per_genre(genre, songs, page, songs_per_genre):
 
             # loop songs
             for track in request.json()['tracks']['track']:
-                if (len(songs) < songs_per_genre):
+                if (len(songs) < int(songs_per_genre) and not database.song_exists(track['name'], track['artist']['name'])):
                     song = {}
                     song['title'] = track['name']
                     song['artist'] = track['artist']['name']
@@ -51,7 +54,7 @@ def get_songs_per_genre(genre, songs, page, songs_per_genre):
                     songs.append(song)
 
             # recursive part of the algorithm
-            if (len(songs) < songs_per_genre and not isLastPage):
+            if (len(songs) < int(songs_per_genre) and not isLastPage):
                 nextPage = int(currentPage) + 1
                 return get_songs_per_genre(genre, songs, nextPage, songs_per_genre)
             else:
