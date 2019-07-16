@@ -4,7 +4,8 @@ import spotifyAPI
 import math
 from config import config
 
-sql_insert_song = """ INSERT INTO songs(title, artist, genre_id, album, art, sound) VALUES(%s,%s,%s,%s,%s,%s) RETURNING id; """
+sql_insert_song = """ INSERT INTO songs(title, artist, genre_id) VALUES(%s,%s,%s) RETURNING id; """
+sql_update_song = """UPDATE songs SET album = %s, art = %s, sound = %s WHERE title = %s AND artist = %s RETURNING id; """
 sql_select_song = """ SELECT id FROM songs WHERE title = %s AND artist = %s;"""
 sql_exist_song = """ SELECT COUNT(id) FROM songs WHERE title = %s AND artist = %s;"""
 sql_count_songs_genre = """ SELECT COUNT(id) FROM songs WHERE genre_id = %s;"""
@@ -60,10 +61,24 @@ def disconnect():
             conn.close()
             print('Database connection closed.')
 
-def insert_song(title, artist, id_genre, album, art, sound):
+def insert_song(title, artist, id_genre):
     try:
         # INSERT song
-        cur.execute(sql_insert_song, (title, artist, id_genre, album, art, sound))
+        cur.execute(sql_insert_song, (title, artist, id_genre))
+
+        # get the generated id back
+        id_song = cur.fetchone()[0]
+        return id_song
+
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+        cur.execute("ROLLBACK")
+        return False
+
+def update_song(title, artist, album, art, sound):
+    try:
+        # INSERT song
+        cur.execute(sql_update_song, (album, art, sound, title, artist))
 
         # get the generated id back
         id_song = cur.fetchone()[0]
@@ -81,6 +96,7 @@ def song_exists(title, artist):
         
         # get the generated id back
         num_songs = cur.fetchone()[0]
+        #print("Duplicate? --> " + str(num_songs > 0))
         return num_songs > 0
 
     except (Exception, psycopg2.DatabaseError) as error:
@@ -101,16 +117,6 @@ def get_genre(id):
         print(error)
         cur.execute("ROLLBACK")
         return False
-
-def count_single_genre(id):
-    try:
-        # INSERT genre
-        cur.execute(sql_count_single_genre, (id,))
-        
-        # get the generated id back
-        num_genres = cur.fetchone()[0]
-
-        return num_genres
 
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
@@ -204,15 +210,15 @@ def populate_database(num_genres, songs_per_genre):
             # keep a mapping of the genre's ID and its name
             if (genre_id is not False):
                 # extraction
-                lastFM_songs = lastFM.get_songs_per_genre(genre, [], 1, songs_per_genre)
+                lastFM_songs = lastFM.get_songs_per_genre(genre, genre_id, [], 1, songs_per_genre)
 
                 # add Spotify information
                 for song in lastFM_songs:
                     s = convert_from_spotify(song)
                     s['genre'] = genre
                     if (s is not False):
-                        # add song to database
-                        id_song = insert_song(s['title'], s['artist'], genre_id, s['album'], s['art'], s['sound'])
+                        # update song with Spotify values in DB here
+                        id_song = update_song(s['title'], s['artist'], s['album'], s['art'], s['sound'])
                         if (id_song is not False) :
                             # increment song count
                             numSongs = numSongs + 1    
@@ -239,10 +245,11 @@ def count_songs_per_genre(genre_id):
         return False
 
 def convert_from_spotify(song):
-    s = spotifyAPI.search_song(song['title'], song['artist'])
-    if (s is not False):
-        return s
-    else:
+    try:
+        s = spotifyAPI.search_song(song['title'], song['artist'])
+        if (s is not False):
+            return s
+    except:
         print("Error in Spotify convertion")
 
 def add_songs_to_genre(genre_id, songs_per_genre):
@@ -259,19 +266,21 @@ def add_songs_to_genre(genre_id, songs_per_genre):
             name = genre[1]
             count = count_songs_per_genre(id)
             page = math.ceil(count/50)
-            extraction = lastFM.get_songs_per_genre(name, [], page, songs_per_genre)
+            lastFM_songs = lastFM.get_songs_per_genre(name, genre_id, [], page, songs_per_genre)
 
-            for song in extraction:
-                # get Spotify information
+            # add Spotify information
+            for song in lastFM_songs:
                 s = convert_from_spotify(song)
-                # add song to database
-                id_song = insert_song(s['title'], s['artist'], genre_id, s['album'], s['art'], s['sound'])
-                if (id_song is not False) :
-                    # increment song count
-                    numSongs = numSongs + 1
-                    # insert primitives to database
-                    for primitive, value in s['primitives'].items():
-                        insert_song_primitive(id_song, primitive, value)
+                s['genre'] = genre
+                if (s is not False):
+                    # update song with Spotify values in DB here
+                    id_song = update_song(s['title'], s['artist'], s['album'], s['art'], s['sound'])
+                    if (id_song is not False) :
+                        # increment song count
+                        numSongs = numSongs + 1    
+                        # insert primitives to database
+                        for primitive, value in s['primitives'].items():
+                            insert_song_primitive(id_song, primitive, value)
 
             print(str(numSongs) + " songs added.")
         else: 

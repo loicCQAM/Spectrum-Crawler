@@ -26,7 +26,7 @@ def get_genres(max_genres, offset):
     return genres
 
 
-def get_songs_per_genre(genre, songs, page, songs_per_genre):
+def get_songs_per_genre(genre, genre_id, songs, page, songs_per_genre):
     # construct query
     query = "?method=tag.gettoptracks&tag=" + genre + "&page=" + str(page)
 
@@ -45,16 +45,19 @@ def get_songs_per_genre(genre, songs, page, songs_per_genre):
 
             # loop songs
             for track in request.json()['tracks']['track']:
-                if (len(songs) < int(songs_per_genre) and database.song_exists(track['name'], track['artist']['name']) is False):
+                if (len(songs) < int(songs_per_genre) and not database.song_exists(track['name'], track['artist']['name'])):
                     song = {}
                     song['title'] = track['name']
                     song['artist'] = track['artist']['name']
                     song['genre'] = genre
                     songs.append(song)
 
+                    # add song to dtabase
+                    database.insert_song(song['title'], song['artist'], genre_id)
+
             # recursive part of the algorithm
             if (len(songs) < int(songs_per_genre) and not isLastPage):
                 nextPage = int(currentPage) + 1
-                return get_songs_per_genre(genre, songs, nextPage, songs_per_genre)
+                return get_songs_per_genre(genre, genre_id, songs, nextPage, songs_per_genre)
             else:
                 return songs
