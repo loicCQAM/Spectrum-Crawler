@@ -21,6 +21,10 @@ def search_song(title, artist):
         song['spotify_id'] = s['id']
         song['title'] = title
         song['artist'] = artist
+        song['album'] = s['album']['name']
+        song['art'] = s['album']['images'][0]['url']
+        song['sound'] = s['preview_url']
+        song['artist'] = artist
         song['primitives'] = {}
 
         # get primitives from API
