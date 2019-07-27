@@ -25,6 +25,21 @@ def get_genres(max_genres, offset):
                 genres.append(genre['name'])
     return genres
 
+def genre_exists(name):
+    # construct query
+    query = "?method=tag.gettoptracks&tag=" + name
+
+    # call API
+    request = requests.get(base_url + query + signature)
+
+    # manage response
+    if (request.status_code != 200):
+        sys.exit("Error: Code " + str(request.status_code))
+    else:
+        if (request.json()['tracks']):
+            # attributes
+            attributes = request.json()['tracks']['@attr']
+            return int(attributes['total']) > 0
 
 def get_songs_per_genre(genre, genre_id, songs, page, songs_per_genre):
     # construct query
