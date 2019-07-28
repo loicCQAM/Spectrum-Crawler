@@ -1,10 +1,10 @@
 import psycopg2
 import lastFM
 import spotifyAPI
+import features
 import math
 from config import config
 import sys
-
 
 # SQL REQUESTS
 sql_insert_song = """ INSERT INTO songs(title, artist, genre_id) VALUES(%s,%s,%s) RETURNING id; """
@@ -230,6 +230,11 @@ def insert_song_primitive(id_song, primitive, value):
         print(error)
         cur.execute("ROLLBACK")
 
+# Add primitive from external libraries
+def add_extra_feature(id_song, sound):
+    if sound:
+        for primitive, value in features.librosa_extract(sound):
+            insert_song_primitive(id_song, primitive, value)
 
 # MAIN FUNCTIONS
 def populate_database(num_genres, songs_per_genre):
@@ -287,6 +292,7 @@ def populate_database(num_genres, songs_per_genre):
                             # insert primitives to database
                             for primitive, value in s['primitives'].items():
                                 insert_song_primitive(id_song, primitive, value)
+                            add_extra_feature(id_song, s['sound'])
                                     
                 totalSongs = totalSongs + numSongs
                 print(str(numSongs) + " songs added in " + genre)
@@ -350,6 +356,7 @@ def add_songs_to_genre(genre, songs_per_genre):
                     # insert primitives to database
                     for primitive, value in s['primitives'].items():
                         insert_song_primitive(id_song, primitive, value)
+                    add_extra_feature(id_song, s['sound'])
                             
         print(str(numSongs) + " songs added in " + genre)
 
