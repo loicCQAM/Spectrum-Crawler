@@ -11,8 +11,7 @@ def librosa_extract(song_url):
     path = download_from_url(song_url)
     try :
 
-        y , sr = librosa.load(song_url)
-
+        y , sr = librosa.load(path)
         tempo, beat_frames = librosa.beat.beat_track(y=y, sr=sr) # Compute a chromagram from a waveform or power spectrogram.
         beat_times = librosa.frames_to_time(beat_frames, sr=sr)
         chroma_stft = librosa.feature.chroma_stft(y=y, sr=sr) # Constant-Q chromagram
@@ -30,34 +29,29 @@ def librosa_extract(song_url):
         tonnetz = librosa.feature.tonnetz(y=y, sr=sr) # Computes the tonal centroid features (tonnetz)
         zero_crossing_rate = librosa.feature.zero_crossing_rate(y=y) # Compute the zero-crossing rate of an audio time series
 
-        # Compute the Fourier tempogram: the short-time Fourier transform of the onset strength envelope
-        hop_length = 512
-        oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
-        tempogram = librosa.feature.fourier_tempogram(onset_envelope=oenv, sr=sr, hop_length=hop_length)
+        features['estimated_tempo'] = tempo
+        features['beat_times'] = json.dumps(beat_times.tolist())
+        features['chroma_stft'] = json.dumps(chroma_stft.tolist())
+        features['chroma_cqt'] = json.dumps(chroma_cqt.tolist())
+        features['chroma_cens'] = json.dumps(chroma_cens.tolist())
+        features['melspectrogram'] = json.dumps(melspectrogram.tolist())
+        features['mfcc'] = json.dumps(mfcc.tolist())
+        features['rms'] = json.dumps(rms.tolist())
+        features['spectral_centroid'] = json.dumps(spectral_centroid.tolist())
+        features['spectral_bandwidth'] = json.dumps(spectral_bandwidth.tolist())
+        features['spectral_contrast'] = json.dumps(spectral_contrast.tolist())
+        features['spectral_flatness'] = json.dumps(spectral_flatness.tolist())
+        features['spectral_rolloff'] = json.dumps(spectral_rolloff.tolist())
+        features['poly_features'] = json.dumps(poly_features.tolist())
+        features['tonnetz'] = json.dumps(tonnetz.tolist())
+        features['zero_crossing_rate'] = json.dumps(zero_crossing_rate.tolist())
 
-        feature['estimated_tempo'] = tempo
-        feature['beat_times'] = json.dumps(beat_times)
-        feature['chroma_stft'] = json.dumps(chroma_stft)
-        feature['chroma_cqt'] = json.dumps(chroma_cqt)
-        feature['chroma_cens'] = json.dumps(chroma_cens)
-        feature['melspectrogram'] = json.dumps(melspectrogram)
-        feature['mfcc'] = json.dumps(mfcc)
-        feature['rms'] = json.dumps(rms)
-        feature['spectral_centroid'] = json.dumps(spectral_centroid)
-        feature['spectral_bandwidth'] = json.dumps(spectral_bandwidth)
-        feature['spectral_contrast'] = json.dumps(spectral_contrast)
-        feature['spectral_flatness'] = json.dumps(spectral_flatness)
-        feature['spectral_rolloff'] = json.dumps(spectral_rolloff)
-        feature['poly_features'] = json.dumps(poly_features)
-        feature['tonnetz'] = json.dumps(tonnetz)
-        feature['zero_crossing_rate'] = json.dumps(zero_crossing_rate)
-        feature['tempogram'] = json.dumps(tempogram)
-    except:
-        print("Could not import features from librosa.")
-        return []
-    
-    delete_file(file_path)
-    return features
+    except Exception as e:
+        features = {}
+        print("Could not import features from librosa : " + str(e))
+    finally:
+      delete_file(path)
+      return features
 
 def download_from_url(url):
     local_filename = url.split('/')[-1] + '.mp3'

@@ -233,7 +233,7 @@ def insert_song_primitive(id_song, primitive, value):
 # Add primitive from external libraries
 def add_extra_feature(id_song, sound):
     if sound:
-        for primitive, value in features.librosa_extract(sound):
+        for primitive, value in features.librosa_extract(sound).items():
             insert_song_primitive(id_song, primitive, value)
 
 # MAIN FUNCTIONS
