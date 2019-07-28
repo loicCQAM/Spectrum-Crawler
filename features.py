@@ -1,17 +1,17 @@
 import librosa
 import json
+import requests
+import os
 
 
-def librosa_extract(song_link):
+def librosa_extract(song_url):
     # https://librosa.github.io/librosa/feature.html
 
     features = {}
-    
+    path = download_from_url(song_url)
     try :
 
-        # CONVERT SONG_LINK TO WAV!
-
-        y , sr = librosa.load(song_link)
+        y , sr = librosa.load(song_url)
 
         tempo, beat_frames = librosa.beat.beat_track(y=y, sr=sr) # Compute a chromagram from a waveform or power spectrogram.
         beat_times = librosa.frames_to_time(beat_frames, sr=sr)
@@ -52,12 +52,28 @@ def librosa_extract(song_link):
         feature['tonnetz'] = json.dumps(tonnetz)
         feature['zero_crossing_rate'] = json.dumps(zero_crossing_rate)
         feature['tempogram'] = json.dumps(tempogram)
-
-        return features
-
     except:
         print("Could not import features from librosa.")
         return []
+    
+    delete_file(file_path)
+    return features
+
+def download_from_url(url):
+    local_filename = url.split('/')[-1] + '.mp3'
+    r = requests.get(url, stream=True)
+    with open(local_filename, 'wb') as f:
+        for chunk in r.iter_content(chunk_size=1024): 
+            if chunk:
+                f.write(chunk)
+    # CONVERT SONG TO WAV!!
+    return local_filename
+
+def delete_file(file_path):
+    try:
+        os.remove(file_path)
+    except :
+        print("Warning, could not delete audio file '" + file_path + "' after use.")
 
 # # Create spectrogram graph
 # import matplotlib.pyplot as plt
